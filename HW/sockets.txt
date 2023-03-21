@@ -1,0 +1,190 @@
+Will Hainsworth
+
+Part 1: UDP Sockets
+
+1. What two system calls are used to create and prepare a (UDP) client socket
+for reading and writing, before you ever read or write to that socket?
+
+  socket & connect
+
+2. Describe how your client code for reading and writing would be different if
+the second call were not used.
+
+  Without connect() it is still possible to send to other destinations by passing
+  an address to sendto() or sendmsg().
+
+3. Where do the strings come from that are sent to the server (i.e., written to
+the socket)?
+
+  The strings come from the command-line which is stored in argv[]
+
+4. What do you notice about the port value used by the client for different
+messages sent using the same socket (i.e., from running ./client a single time)?
+
+5. What do you notice about the port value used by the client for different
+messages sent using different sockets (i.e., from running ./client multiple times)?
+
+  192.168.2.33:52592 was the port number for the first ./client call
+
+  192.168.2.33:44231 was the port number for the second ./client call
+
+  The port number changes for each time ./client was run.
+
+6. Looking inside server.c, how many sockets does the server use to communicate
+with multiple clients?
+
+  The server uses one socket to communicate with multiple clients.
+
+7. How many total calls to send() / write() were made by the client?
+
+  3 total write() commands, one for each argument after the port number
+
+8. How many messages were received by the kernel of the server-side process before
+the server called recvfrom() the second time?
+
+  The second message was received.
+
+9. How many total calls to recvfrom() were required for the server process to
+read all the messages/bytes that were sent?
+
+  3 calls were required.
+
+10. Why didn't the server read all the messages that were ready with a single
+call to recvfrom()?
+
+  All receive operations return only one packet.
+
+Part 2: TCP Sockets
+
+11. How does the role of the original socket (i.e., sfd, returned from the call
+to socket()), after listen() is called on it, compare with the role of the socket
+returned from the call to accept()?
+
+  The original socket is a passive socket, it is waiting for become a new socket.
+  accept() will create the new connected socket.
+
+12. With the new changes you have implemented, how have the semantics associated
+with the call to connect() changed? That is, what will happen now when you call
+connect() that is different from when you called connect() with a UDP socket?
+
+  A call to connect with a UDP socket sets an address. A call to connect with
+  a TCP socket will create a new connection to another TCP socket.
+
+13. Why does the ss output show an established connection ("ESTAB") between client
+and server before any messages are sent from client to server?
+
+  Because we've called connect() on the socket
+
+14. What do you notice about the port value used by the client for different
+messages sent using the same socket (i.e., from running ./client a single time)?
+
+  The messages that use the same socket have the same port value.
+
+15. What do you notice about the port value used by the client for different
+messages sent using different sockets (i.e., from running ./client multiple times)?
+
+  The port value increments by 2 from the previous port value
+
+16. Looking inside server.c, how many sockets does the server use to communicate
+with multiple clients? For example, one for each client, one for all clients, etc.
+How does this compare to the answer to the behavior for a server-side UDP socket
+(see #6)?
+
+  One for each client. UDP used one for all clients.
+
+17. How many total calls to send() / write() were made by the client?
+
+  3 calls were made
+
+18. How many messages were received by the kernel of the server-side process
+before the server called recv() the second time?
+
+  The second and third messages were received.
+
+19. How many total calls to recv() were required for the server process to read
+all the messages/bytes that were sent?
+
+  Two recv()'s were required for the server to read all the messages that were
+  sent.
+
+20. How and why does the answer to #19 differ from that from #9?
+
+  TCP will write to a byte stream progressively while UDP takes in datagrams
+  one at a time.
+
+Part 3: Making Your Client Issue HTTP Requests
+
+21. What is the output of sha1sum?
+
+  0ef39a3f241cdd6552ad131e01afa9171b3dab8d  -
+
+22. Show the command pipeline that you used to run your client program and issue
+the request.
+
+  ./client -4 www-notls.imaal.byu.edu 80 < http-bestill.txt > bestill.txt
+
+23. Show the output to the following: $ cat bestill.txt
+
+  Sent 80 bytes to server
+  Received 1009 bytes: HTTP/1.1 200 OK
+  Date: Thu, 24 Feb 2022 23:28:59 GMT
+  Server: Apache/2.4.51 (Debian)
+  Upgrade: h2c
+  Connection: Upgrade, close
+  Content-length: 809
+  Vary: Accept-Encoding
+  Content-Type: text/plain
+
+
+  1. Be still, my soul: The Lord is on thy side;
+  With patience bear thy cross of grief or pain.
+  Leave to thy God to order and provide;
+  In ev'ry change he faithful will remain.
+  Be still, my soul: Thy best, thy heav'nly Friend
+  Thru thorny ways leads to a joyful end.
+
+  2. Be still, my soul: Thy God doth undertake
+  To guide the future as he has the past.
+  Thy hope, thy confidence let nothing shake;
+  All now mysterious shall be bright at last.
+  Be still, my soul: The waves and winds still know
+  His voice who ruled them while he dwelt below.
+
+  3. Be still, my soul: The hour is hast'ning on
+  When we shall be forever with the Lord,
+  When disappointment, grief, and fear are gone,
+  Sorrow forgot, love's purest joys restored.
+  Be still, my soul: When change and tears are past,
+  All safe and blessed we shall meet at last.
+  v
+
+24. Show the command pipeline that you used to run your client program and issue
+the request.
+
+  ./client -4 www-notls.imaal.byu.edu 80 < http-socket.txt > ./strip_http.py > socket.jpg
+
+25. Show the output to the following: $ sha1sum socket.jpg
+
+  72da7be20ca15f818a7a128bad044a4bd6fa1ecf  socket.jpg
+
+Part 4: Review Questions
+
+26. What happens when you call read() (or recv()) on an open socket (UDP or TCP),
+and there are no messages are available at the socket for reading?
+
+  If no messages are available at the socket, the receive calls
+  wait for a message to arrive, unless the socket is nonblocking
+  (see fcntl(2)), in which case the value -1 is returned and errno
+  is set to EAGAIN or EWOULDBLOCK.
+
+27. What happens when you call read() (or recv()) on an open socket (UDP or TCP),
+and the amount of data available is less than the requested amount?
+
+  It grabs all available date and returns.
+
+28. What happens you you call read() (or recv()) on an open UDP socket, and you
+specify a length that is less than the length of the next datagram?
+
+  If a message is too long to fit in the supplied
+  buffer, excess bytes may be discarded depending on the type of
+  socket the message is received from.

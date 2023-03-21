@@ -1,0 +1,207 @@
+Will Hainsworth
+HW 3
+
+Part 1: exec() Overview
+
+1)
+
+The program will setup a char array called newenviron, sleep for 30 seconds,
+and then check to see if argc is less than or equal to 1. If it is, it exits
+the program. If the condition doesn't run, then the program runs execve with the
+given program in argv. It uses argv[1] as the pathname of the file and &argv[1]
+as a pointer to an array of pointers to strings used for command-line arguments.
+Simply put, execve will stop whatever is running and run the argument given.
+
+2)
+
+The print statement should not print because execve will stop the running
+program and run something new. The final print statement can run if a non-valid
+program is given, something that can't be executed.
+
+Part 2: exec() Experimentation
+
+3)
+
+./exec /bin/cat
+Program "./exec" has pid 1308469. Sleeping.
+Running exec of "/bin/cat"
+
+4)
+
+ps -p 1308469 -o user,pid,ppid,state,ucmd
+USER         PID    PPID S CMD
+hainsw   1308469 1307100 S exec
+
+ps -p 1308469 -o user,pid,ppid,state,ucmd
+USER         PID    PPID S CMD
+hainsw   1308469 1307100 S cat
+
+5)
+
+The user, PID, PPID, and state are all the same. The CMD changes because the
+exec program runs in the first thirty seconds and then changes to the cat
+program, the values of exec are inherited by cat as it is essentially replacing
+that first program.
+
+6)
+
+./exec /does-not-exist
+Program "./exec" has pid 1309325. Sleeping.
+Running exec of "/does-not-exist"
+End of program "./exec".
+
+The condition did not run since there was a command argumnet, however since the
+program to run does not exist, execve just ends and moves on to the final print
+of exec.
+
+Part 3: fork() Overview
+
+7)
+
+The program calls fork() and sets a variable to it. The fork() will either
+return a negative number (unsuccessful), a zero (the child), or a positive
+number (the parent). Fork will be creating a child and parent process.
+
+Section A
+Section A just prints the pid and then sleeps for 30 seconds
+
+Section B
+This section runs if pid is 0.
+
+Section C
+This sections runs if pid is greater than 0.
+
+Section D
+This section will run at the end of the program if the conditions did not run.
+This will not happen since the three conditions covered all possible outcomes of
+fork().
+
+8)
+
+Sections A and C are run by the parent
+Sections A and B are run by the child
+
+Part 4: fork() Experimentation
+
+9)
+
+ps -p 1312810,1312811 -o user,pid,ppid,state,ucmd --forest
+USER         PID    PPID S CMD
+hainsw   1312810 1307100 S fork
+hainsw   1312811 1312810 S  \_ fork
+
+ps -p 1312810,1312811 -o user,pid,ppid,state,ucmd --forest
+USER         PID    PPID S CMD
+hainsw   1312810 1307100 S fork
+hainsw   1312811 1312810 Z  \_ fork <defunct>
+
+10)
+
+The state in the first ps command is S which shows that the process is still
+going. The state changes to Z in the second ps command because the process is
+defunct (or Zombie). After process B is complete, the child process is done.
+The parent is still running since the state is still S.
+
+11)
+
+Adding a wait(NULL) command in Section C will do this
+
+12)
+
+ps -p 1314140,1314141 -o user,pid,ppid,state,ucmd --forest
+USER         PID    PPID S CMD
+hainsw   1314140 1307100 S fork
+hainsw   1314141 1314140 S  \_ fork
+
+ps -p 1314140,1314141 -o user,pid,ppid,state,ucmd --forest
+USER         PID    PPID S CMD
+hainsw   1314140 1307100 S fork
+
+13)
+
+The PID 1314140 is still active for both but now the second PID 1314141 is
+inactive and no longer in a zombie state like before. The wait command waited
+for the the second process to exit properly before moving on.
+
+14)
+
+ps -p 1315362,1315363 -o user,pid,ppid,state,ucmd --forest
+USER         PID    PPID S CMD
+hainsw   1315362 1307100 S fork
+hainsw   1315363 1315362 S  \_ fork
+
+ps -p 1315362,1315363 -o user,pid,ppid,state,ucmd --forest
+USER         PID    PPID S CMD
+hainsw   1315363       1 S fork
+
+15)
+
+The initial process is no longer in the second ps because the parent process is
+cleared out without the need of the wait command. The second process is still
+in the S state.
+
+Part 5: File Descriptor Inheritance and File Description Sharing
+
+16)
+
+BEFORE FORK
+SECTION A
+SECTION A
+SECTION B
+SECTION C
+
+17)
+
+The program is switching back forth between the parent and child. The kernel
+starts with the parent and goes to Section A, then switches to the child and
+goes through Section A and B. Then switches back to the parent and goes through
+Section C.
+
+Part 6: Pipes
+
+18)
+
+Starting program; process has pid 1320135
+Section A;  pid 1320135
+Section A;  pid 1320136
+Section B
+hello from Section B
+Section C
+
+Part 7: Combining fork() and exec()
+
+19)
+
+Starting program; process has pid 1086983
+Section A;  pid 1086983
+Section A;  pid 1086984
+Section B
+Program "./fork" has pid 1086984. Sleeping.
+Running exec of "/bin/cat"
+foobar
+hello from Section B
+Section C
+
+Part 8: File Descriptor Duplication
+
+20)
+
+Output:
+
+Starting program; process has pid 1087659
+Section A;  pid 1087659
+Section A;  pid 1087660
+Section B
+Program "./fork" has pid 1087660. Sleeping.
+Running exec of "/bin/cat"
+hello from Section B
+Section C
+
+fork-output.txt contents:
+
+BEFORE FORK
+SECTION A
+SECTION A
+SECTION B
+foobar
+SECTION C
